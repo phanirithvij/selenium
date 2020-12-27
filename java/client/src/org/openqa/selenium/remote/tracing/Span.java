@@ -17,6 +17,8 @@
 
 package org.openqa.selenium.remote.tracing;
 
+import java.util.Map;
+
 public interface Span extends AutoCloseable, TraceContext {
 
   Span setName(String name);
@@ -24,6 +26,9 @@ public interface Span extends AutoCloseable, TraceContext {
   Span setAttribute(String key, boolean value);
   Span setAttribute(String key, Number value);
   Span setAttribute(String key, String value);
+
+  Span addEvent(String name);
+  Span addEvent(String name, Map<String, EventAttributeValue> attributeMap);
 
   Span setStatus(Status status);
 
@@ -41,7 +46,7 @@ public interface Span extends AutoCloseable, TraceContext {
     // The nice name is the name expected in an OT trace.
     private final String niceName;
 
-    private Kind(String niceName) {
+    Kind(String niceName) {
       this.niceName = niceName;
     }
 

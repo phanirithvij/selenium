@@ -75,6 +75,11 @@ public class ResourceHandler implements Routable {
     Resource resource = result.get();
 
     if (resource.isDirectory()) {
+      Optional<Resource> index = resource.get("index.html");
+      if (index.isPresent()) {
+        return readFile(req, index.get());
+      }
+
       return readDirectory(req, resource);
     }
     return readFile(req, resource);
@@ -182,7 +187,7 @@ public class ResourceHandler implements Routable {
         break;
 
       default:
-        type = HTML_UTF_8;
+        type = MediaType.create("text", "html");
         break;
     }
 

@@ -31,16 +31,19 @@ import static org.openqa.selenium.json.Json.MAP_TYPE;
 import com.google.common.collect.ImmutableMap;
 
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.ImmutableCapabilities;
 import org.openqa.selenium.Platform;
 import org.openqa.selenium.json.Json;
+import org.openqa.selenium.testing.UnitTests;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
 import java.util.Map;
 
+@Category(UnitTests.class)
 public class NewSessionPayloadTest {
 
   @Test
@@ -162,7 +165,7 @@ public class NewSessionPayloadTest {
         "desiredCapabilities", singletonMap(
             "platform", "linux")));
 
-    assertEquals(Platform.LINUX, capabilities.get(0).getPlatform());
+    assertEquals(Platform.LINUX, capabilities.get(0).getPlatformName());
     assertEquals(Platform.LINUX, capabilities.get(0).getCapability("platform"));
     assertNull(capabilities.get(0).getCapability("platformName"));
   }
@@ -174,7 +177,7 @@ public class NewSessionPayloadTest {
             "alwaysMatch", singletonMap(
                 "platformName", "linux"))));
 
-    assertEquals(Platform.LINUX, capabilities.get(0).getPlatform());
+    assertEquals(Platform.LINUX, capabilities.get(0).getPlatformName());
     assertNull(capabilities.get(0).getCapability("platform"));
     assertEquals("linux", capabilities.get(0).getCapability("platformName"));
   }

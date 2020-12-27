@@ -10,16 +10,35 @@ enum Status {
   UNAVAILABLE
 }
 
+type Session {
+  id: String!
+  capabilities: String!
+  startTime: String!
+  uri: Uri!
+  nodeId: String!
+  nodeUri: Uri!
+  sessionDurationMillis: String!
+  slot: Slot
+}
+
+type Slot {
+  id: String!
+  stereotype: String!
+  lastStarted: String!
+}
+
 type Node {
   id: ID!
   uri: Uri!
   status: Status!
   maxSession: Int!
+  sessions: [Session]!
   capabilities: String!
 }
 
 type GridQuery {
   grid: Grid!
+  session(id: String!) : Session!
 }
 
 type Grid {
@@ -27,4 +46,5 @@ type Grid {
   nodes: [Node!]!
   totalSlots: Int
   usedSlots: Int
+  sessionCount: Int!
 }

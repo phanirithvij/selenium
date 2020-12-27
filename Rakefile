@@ -56,11 +56,11 @@ def release_version
 end
 
 def google_storage_version
-  '4.0-alpha-7'
+  '4.0-beta-7'
 end
 
 def version
-  "#{release_version}.0-alpha-7"
+  "#{release_version}.0-beta-7"
 end
 
 # The build system used by webdriver is layered on top of rake, and we call it
@@ -104,9 +104,13 @@ task '//java/client/test/org/openqa/selenium/environment/webserver:webserver:ube
 JAVA_RELEASE_TARGETS = %w[
   //java/client/src/org/openqa/selenium/chrome:chrome-maven-artifacts
   //java/client/src/org/openqa/selenium/chromium:chromium-maven-artifacts
+  //java/client/src/org/openqa/selenium/devtools/v84:v84-maven-artifacts
+  //java/client/src/org/openqa/selenium/devtools/v85:v85-maven-artifacts
+  //java/client/src/org/openqa/selenium/devtools/v86:v86-maven-artifacts
+  //java/client/src/org/openqa/selenium/devtools/v87:v87-maven-artifacts
   //java/client/src/org/openqa/selenium/devtools:devtools-maven-artifacts
-  //java/client/src/org/openqa/selenium/edge/edgehtml:edgehtml-maven-artifacts
-  //java/client/src/org/openqa/selenium/edge:edgeium-maven-artifacts
+  //java/client/src/org/openqa/selenium/edge:edge-maven-artifacts
+  //java/client/src/org/openqa/selenium/edgehtml:edgehtml-maven-artifacts
   //java/client/src/org/openqa/selenium/firefox/xpi:xpi-maven-artifacts
   //java/client/src/org/openqa/selenium/firefox:firefox-maven-artifacts
   //java/client/src/org/openqa/selenium/ie:ie-maven-artifacts
@@ -120,6 +124,7 @@ JAVA_RELEASE_TARGETS = %w[
   //java/client/src/org/openqa/selenium:client-combined-maven-artifacts
   //java/client/src/org/openqa/selenium:core-maven-artifacts
   //java/server/src/com/thoughtworks/selenium/webdriven:webdriven-maven-artifacts
+  //java/server/src/org/openqa/selenium/grid/sessionmap/jdbc:jdbc-maven-artifacts
   //java/server/src/org/openqa/selenium/grid/sessionmap/redis:redis-maven-artifacts
   //java/server/src/org/openqa/selenium/grid:grid-maven-artifacts
 ]
@@ -256,15 +261,17 @@ task test_rb_local: [
   ('//rb:safari-preview-test' if SeleniumRake::Checks.mac?),
   ('//rb:safari-test' if SeleniumRake::Checks.mac?),
   ('//rb:ie-test' if SeleniumRake::Checks.windows?),
-  ('//rb:edge-test' if SeleniumRake::Checks.windows?)
+  ('//rb:edge-test' unless SeleniumRake::Checks.linux?)
 ].compact
 
 task test_rb_remote: [
   '//rb:remote-chrome-test',
   '//rb:remote-firefox-test',
   ('//rb:remote-safari-test' if SeleniumRake::Checks.mac?),
+  # BUG - https://github.com/SeleniumHQ/selenium/issues/6791
+  # ('//rb:remote-safari-preview-test' if SeleniumRake::Checks.mac?),
   ('//rb:remote-ie-test' if SeleniumRake::Checks.windows?),
-  ('//rb:remote-edge-test' if SeleniumRake::Checks.windows?)
+  ('//rb:remote-edge-test' unless SeleniumRake::Checks.linux?)
 ].compact
 
 task test_py: [:py_prep_for_install_release, 'py:marionette_test']

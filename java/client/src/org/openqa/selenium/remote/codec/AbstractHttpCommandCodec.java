@@ -50,7 +50,6 @@ import static org.openqa.selenium.remote.DriverCommand.GET_CREDENTIALS;
 import static org.openqa.selenium.remote.DriverCommand.GET_CURRENT_CONTEXT_HANDLE;
 import static org.openqa.selenium.remote.DriverCommand.GET_CURRENT_URL;
 import static org.openqa.selenium.remote.DriverCommand.GET_ELEMENT_LOCATION;
-import static org.openqa.selenium.remote.DriverCommand.GET_ELEMENT_PROPERTY;
 import static org.openqa.selenium.remote.DriverCommand.GET_ELEMENT_RECT;
 import static org.openqa.selenium.remote.DriverCommand.GET_ELEMENT_SIZE;
 import static org.openqa.selenium.remote.DriverCommand.GET_ELEMENT_TAG_NAME;
@@ -97,7 +96,6 @@ import static org.openqa.selenium.remote.DriverCommand.SWITCH_TO_FRAME;
 import static org.openqa.selenium.remote.DriverCommand.SWITCH_TO_NEW_WINDOW;
 import static org.openqa.selenium.remote.DriverCommand.SWITCH_TO_PARENT_FRAME;
 import static org.openqa.selenium.remote.DriverCommand.SWITCH_TO_WINDOW;
-import static org.openqa.selenium.remote.DriverCommand.UPLOAD_FILE;
 import static org.openqa.selenium.remote.http.Contents.bytes;
 import static org.openqa.selenium.remote.http.Contents.string;
 
@@ -164,7 +162,6 @@ public abstract class AbstractHttpCommandCodec implements CommandCodec<HttpReque
 
     defineCommand(SET_ALERT_CREDENTIALS, post(sessionId + "/alert/credentials"));
 
-    defineCommand(UPLOAD_FILE, post(sessionId + "/file"));
     defineCommand(SCREENSHOT, get(sessionId + "/screenshot"));
     defineCommand(ELEMENT_SCREENSHOT, get(sessionId + "/element/:id/screenshot"));
     defineCommand(GET_TITLE, get(sessionId + "/title"));
@@ -173,7 +170,6 @@ public abstract class AbstractHttpCommandCodec implements CommandCodec<HttpReque
     defineCommand(FIND_ELEMENTS, post(sessionId + "/elements"));
 
     String elementId = sessionId + "/element/:id";
-    defineCommand(GET_ELEMENT_PROPERTY, get(elementId + "/property/:name"));
     defineCommand(CLICK_ELEMENT, post(elementId + "/click"));
     defineCommand(CLEAR_ELEMENT, post(elementId + "/clear"));
     defineCommand(GET_ELEMENT_VALUE_OF_CSS_PROPERTY, get(elementId + "/css/:propertyName"));

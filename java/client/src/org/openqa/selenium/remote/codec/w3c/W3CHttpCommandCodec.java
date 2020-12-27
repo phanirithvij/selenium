@@ -37,9 +37,13 @@ import static org.openqa.selenium.remote.DriverCommand.GET_AVAILABLE_LOG_TYPES;
 import static org.openqa.selenium.remote.DriverCommand.GET_CURRENT_WINDOW_HANDLE;
 import static org.openqa.selenium.remote.DriverCommand.GET_CURRENT_WINDOW_POSITION;
 import static org.openqa.selenium.remote.DriverCommand.GET_CURRENT_WINDOW_SIZE;
+import static org.openqa.selenium.remote.DriverCommand.GET_ELEMENT_ACCESSIBLE_NAME;
+import static org.openqa.selenium.remote.DriverCommand.GET_ELEMENT_ARIA_ROLE;
 import static org.openqa.selenium.remote.DriverCommand.GET_ELEMENT_ATTRIBUTE;
+import static org.openqa.selenium.remote.DriverCommand.GET_ELEMENT_DOM_ATTRIBUTE;
 import static org.openqa.selenium.remote.DriverCommand.GET_ELEMENT_LOCATION;
 import static org.openqa.selenium.remote.DriverCommand.GET_ELEMENT_LOCATION_ONCE_SCROLLED_INTO_VIEW;
+import static org.openqa.selenium.remote.DriverCommand.GET_ELEMENT_DOM_PROPERTY;
 import static org.openqa.selenium.remote.DriverCommand.GET_ELEMENT_RECT;
 import static org.openqa.selenium.remote.DriverCommand.GET_ELEMENT_SIZE;
 import static org.openqa.selenium.remote.DriverCommand.GET_LOCAL_STORAGE_ITEM;
@@ -68,6 +72,7 @@ import static org.openqa.selenium.remote.DriverCommand.SET_LOCAL_STORAGE_ITEM;
 import static org.openqa.selenium.remote.DriverCommand.SET_SESSION_STORAGE_ITEM;
 import static org.openqa.selenium.remote.DriverCommand.SET_TIMEOUT;
 import static org.openqa.selenium.remote.DriverCommand.SUBMIT_ELEMENT;
+import static org.openqa.selenium.remote.DriverCommand.UPLOAD_FILE;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -149,10 +154,18 @@ public class W3CHttpCommandCodec extends AbstractHttpCommandCodec {
     defineCommand(GET_ALERT_TEXT, get(alert + "/text"));
     defineCommand(SET_ALERT_VALUE, post(alert + "/text"));
 
+    defineCommand(UPLOAD_FILE, post(sessionId + "/se/file"));
+
     defineCommand(GET_ACTIVE_ELEMENT, get(sessionId + "/element/active"));
 
     defineCommand(ACTIONS, post(sessionId + "/actions"));
     defineCommand(CLEAR_ACTIONS_STATE, delete(sessionId + "/actions"));
+
+    String elementId = sessionId + "/element/:id";
+    defineCommand(GET_ELEMENT_DOM_PROPERTY, get(elementId + "/property/:name"));
+    defineCommand(GET_ELEMENT_DOM_ATTRIBUTE, get(elementId + "/attribute/:name"));
+    defineCommand(GET_ELEMENT_ARIA_ROLE, get(elementId + "/computedrole"));
+    defineCommand(GET_ELEMENT_ACCESSIBLE_NAME, get(elementId + "/computedlabel"));
 
     // Emulate the old Actions API since everyone still likes to call these things.
     alias(CLICK, ACTIONS);
@@ -428,7 +441,7 @@ public class W3CHttpCommandCodec extends AbstractHttpCommandCodec {
   private String cssEscape(String using) {
     using = using.replaceAll("([\\s'\"\\\\#.:;,!?+<>=~*^$|%&@`{}\\-\\/\\[\\]\\(\\)])", "\\\\$1");
     if (using.length() > 0 && Character.isDigit(using.charAt(0))) {
-      using = "\\" + Integer.toString(30 + Integer.parseInt(using.substring(0,1))) + " " + using.substring(1);
+      using = "\\" + (30 + Integer.parseInt(using.substring(0,1))) + " " + using.substring(1);
     }
     return using;
   }

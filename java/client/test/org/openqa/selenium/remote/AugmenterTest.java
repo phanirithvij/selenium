@@ -19,6 +19,7 @@ package org.openqa.selenium.remote;
 
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.HasCapabilities;
@@ -30,6 +31,8 @@ import org.openqa.selenium.SearchContext;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxOptions;
+import org.openqa.selenium.html5.LocationContext;
+import org.openqa.selenium.testing.UnitTests;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,10 +45,33 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.mock;
 import static org.openqa.selenium.remote.DriverCommand.FIND_ELEMENT;
 
+@Category(UnitTests.class)
 public class AugmenterTest {
 
-  protected Augmenter getAugmenter() {
+  private Augmenter getAugmenter() {
     return new Augmenter();
+  }
+
+  @Test
+  public void shouldAugmentRotatable() {
+    final Capabilities caps = new ImmutableCapabilities(CapabilityType.ROTATABLE, true);
+    WebDriver driver = new RemoteWebDriver(new StubExecutor(caps), caps);
+
+    WebDriver returned = getAugmenter().augment(driver);
+
+    assertThat(returned).isNotSameAs(driver);
+    assertThat(returned).isInstanceOf(Rotatable.class);
+  }
+
+  @Test
+  public void shouldAugmentLocationContext() {
+    final Capabilities caps = new ImmutableCapabilities(CapabilityType.SUPPORTS_LOCATION_CONTEXT, true);
+    WebDriver driver = new RemoteWebDriver(new StubExecutor(caps), caps);
+
+    WebDriver returned = getAugmenter().augment(driver);
+
+    assertThat(returned).isNotSameAs(driver);
+    assertThat(returned).isInstanceOf(LocationContext.class);
   }
 
   @Test
@@ -172,7 +198,7 @@ public class AugmenterTest {
 
     @Override
     public List<WebElement> findElements(SearchContext context) {
-      return List.of(((FindByMagic) context).findByMagic(magicWord));
+      return Collections.singletonList(((FindByMagic) context).findByMagic(magicWord));
     }
   }
 
@@ -182,7 +208,7 @@ public class AugmenterTest {
 
   @Test
   public void shouldBeAbleToAugmentMultipleTimes() {
-    Capabilities caps = new ImmutableCapabilities("canRotate", true, "magic.numbers", true);
+    Capabilities caps = new ImmutableCapabilities("rotatable", true, "magic.numbers", true);
 
     StubExecutor stubExecutor = new StubExecutor(caps);
     stubExecutor.expect(DriverCommand.GET_SCREEN_ORIENTATION,
@@ -190,12 +216,7 @@ public class AugmenterTest {
       ScreenOrientation.PORTRAIT.name());
     RemoteWebDriver driver = new RemoteWebDriver(stubExecutor, caps);
 
-    WebDriver augmented = getAugmenter()
-      .addDriverAugmentation(
-        "canRotate",
-        Rotatable.class,
-        (c, exe) -> new RemoteRotatable(exe))
-      .augment(driver);
+    WebDriver augmented = getAugmenter().augment(driver);
 
     assertThat(driver).isNotSameAs(augmented);
     assertThat(augmented).isInstanceOf(Rotatable.class);

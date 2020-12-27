@@ -147,6 +147,7 @@ def testShouldBeAbleToClickElementThatIsOutOfViewInAFrameThatIsOutOfView(driver,
 
 
 @pytest.mark.xfail_firefox
+@pytest.mark.xfail_chrome
 def testShouldBeAbleToClickElementThatIsOutOfViewInANestedFrame(driver, pages):
     pages.load("scrolling_tests/page_with_nested_scrolling_frames.html")
     driver.switch_to.frame(driver.find_element(By.NAME, "scrolling_frame"))
@@ -158,6 +159,7 @@ def testShouldBeAbleToClickElementThatIsOutOfViewInANestedFrame(driver, pages):
 
 @pytest.mark.xfail_firefox
 @pytest.mark.xfail_safari
+@pytest.mark.xfail_chrome
 def testShouldBeAbleToClickElementThatIsOutOfViewInANestedFrameThatIsOutOfView(driver, pages):
     pages.load("scrolling_tests/page_with_nested_scrolling_frames_out_of_view.html")
     driver.switch_to.frame(driver.find_element(By.NAME, "scrolling_frame"))
@@ -178,14 +180,14 @@ def getScrollTop(driver):
     return driver.execute_script("return document.body.scrollTop")
 
 
-@pytest.mark.xfail_firefox(
-    reason='https://github.com/w3c/webdriver/issues/408')
-@pytest.mark.xfail_remote(
-    reason='https://github.com/w3c/webdriver/issues/408')
-@pytest.mark.xfail_safari
-def testShouldBeAbleToClickElementInATallFrame(driver, pages):
-    pages.load("scrolling_tests/page_with_tall_frame.html")
-    driver.switch_to.frame(driver.find_element(By.NAME, "tall_frame"))
-    element = driver.find_element(By.NAME, "checkbox")
-    element.click()
-    assert element.is_selected()
+# @pytest.mark.xfail_firefox(
+#     reason='https://github.com/w3c/webdriver/issues/408')
+# @pytest.mark.xfail_remote(
+#     reason='https://github.com/w3c/webdriver/issues/408')
+# @pytest.mark.xfail_safari
+# def testShouldBeAbleToClickElementInATallFrame(driver, pages):
+#     pages.load("scrolling_tests/page_with_tall_frame.html")
+#     driver.switch_to.frame(driver.find_element(By.NAME, "tall_frame"))
+#     element = driver.find_element(By.NAME, "checkbox")
+#     element.click()
+#     assert element.is_selected()

@@ -34,29 +34,45 @@ public interface Capabilities {
     return String.valueOf(Optional.ofNullable(getCapability("browserName")).orElse(""));
   }
 
+  /**
+   * @deprecated  Use {@link #getPlatformName()}
+   */
+  @Deprecated
   default Platform getPlatform() {
-    return Stream.of("platform", "platformName")
-        .map(this::getCapability)
-        .filter(Objects::nonNull)
-        .map(cap -> {
-          if (cap instanceof Platform) {
-            return (Platform) cap;
-          }
-
-          try {
-            return Platform.fromString((String.valueOf(cap)));
-          } catch (WebDriverException e) {
-            return null;
-          }
-        })
-        .filter(Objects::nonNull)
-        .findFirst()
-        .orElse(null);
+    return getPlatformName();
   }
 
+  default Platform getPlatformName() {
+    return Stream.of("platform", "platformName")
+      .map(this::getCapability)
+      .filter(Objects::nonNull)
+      .map(cap -> {
+        if (cap instanceof Platform) {
+          return (Platform) cap;
+        }
+
+        try {
+          return Platform.fromString((String.valueOf(cap)));
+        } catch (WebDriverException e) {
+          return null;
+        }
+      })
+      .filter(Objects::nonNull)
+      .findFirst()
+      .orElse(null);
+  }
+
+  /**
+   * @deprecated Use {@link #getBrowserVersion()}
+   */
+  @Deprecated
   default String getVersion() {
+    return getBrowserVersion();
+  }
+
+  default String getBrowserVersion() {
     return String.valueOf(Optional.ofNullable(getCapability("browserVersion")).orElse(
-        Optional.ofNullable(getCapability("version")).orElse("")));
+      Optional.ofNullable(getCapability("version")).orElse("")));
   }
 
   /**

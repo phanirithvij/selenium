@@ -57,7 +57,7 @@ public class TestUtilities {
 
   public static boolean isInternetExplorer(WebDriver driver) {
     String userAgent = getUserAgent(driver);
-    return userAgent != null && userAgent.contains("MSIE") || userAgent.contains("Trident");
+    return userAgent != null && (userAgent.contains("MSIE") || userAgent.contains("Trident"));
   }
 
   public static boolean isChrome(WebDriver driver) {
@@ -163,7 +163,7 @@ public class TestUtilities {
     }
 
     Capabilities caps = ((HasCapabilities) driver).getCapabilities();
-    return caps.getPlatform();
+    return caps.getPlatformName();
   }
 
   public static boolean isLocal() {
@@ -173,5 +173,9 @@ public class TestUtilities {
 
   public static boolean isOnTravis() {
     return Boolean.parseBoolean(System.getenv("TRAVIS"));
+  }
+
+  public static boolean isOnGitHubActions() {
+    return Boolean.parseBoolean(System.getenv("GITHUB_ACTIONS"));
   }
 }

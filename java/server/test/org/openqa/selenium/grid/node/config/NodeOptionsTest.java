@@ -18,58 +18,49 @@
 package org.openqa.selenium.grid.node.config;
 
 import org.assertj.core.api.Condition;
-import org.junit.Before;
 import org.junit.Test;
+import org.openqa.selenium.Capabilities;
+import org.openqa.selenium.ImmutableCapabilities;
 import org.openqa.selenium.Platform;
 import org.openqa.selenium.WebDriverInfo;
 import org.openqa.selenium.chrome.ChromeDriverInfo;
-import org.openqa.selenium.events.EventBus;
-import org.openqa.selenium.events.local.GuavaEventBus;
 import org.openqa.selenium.grid.config.Config;
+import org.openqa.selenium.grid.config.ConfigException;
 import org.openqa.selenium.grid.config.MapConfig;
-import org.openqa.selenium.grid.node.local.LocalNode;
-import org.openqa.selenium.remote.http.HttpClient;
-import org.openqa.selenium.remote.tracing.DefaultTestTracer;
-import org.openqa.selenium.remote.tracing.Tracer;
+import org.openqa.selenium.grid.config.TomlConfig;
+import org.openqa.selenium.grid.data.CreateSessionRequest;
+import org.openqa.selenium.grid.node.ActiveSession;
+import org.openqa.selenium.grid.node.SessionFactory;
+import org.openqa.selenium.json.Json;
 
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static java.util.Collections.emptyMap;
+import static java.util.Collections.emptySet;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
-import static org.mockito.Mockito.spy;
 
+import com.google.common.collect.ImmutableMap;
+
+@SuppressWarnings("DuplicatedCode")
 public class NodeOptionsTest {
-
-  private Tracer tracer;
-  private HttpClient.Factory clientFactory;
-  private LocalNode.Builder builder;
-  private LocalNode.Builder builderSpy;
-
-  @Before
-  public void setUp() throws URISyntaxException {
-    tracer = DefaultTestTracer.createTracer();
-    EventBus bus = new GuavaEventBus();
-    clientFactory = HttpClient.Factory.createDefault();
-    URI uri = new URI("http://localhost:1234");
-    builder = LocalNode.builder(tracer, bus, uri, uri, null);
-    builderSpy = spy(builder);
-  }
 
   @Test
   public void canConfigureNodeWithDriverDetection() {
     assumeFalse("We don't have driver servers in PATH when we run unit tests",
-                Boolean.parseBoolean(System.getenv("TRAVIS")));
+                Boolean.parseBoolean(System.getenv("GITHUB_ACTIONS")));
     assumeTrue("ChromeDriver needs to be available", new ChromeDriverInfo().isAvailable());
 
-    Config config = new MapConfig(singletonMap(
-        "node", singletonMap("detect-drivers", "true")));
+    Config config = new MapConfig(singletonMap("node", singletonMap("detect-drivers", "true")));
 
     List<WebDriverInfo> reported = new ArrayList<>();
     new NodeOptions(config).getSessionFactories(info -> {
@@ -89,10 +80,10 @@ public class NodeOptionsTest {
   public void shouldDetectCorrectDriversOnWindows() {
     assumeTrue(Platform.getCurrent().is(Platform.WINDOWS));
     assumeFalse("We don't have driver servers in PATH when we run unit tests",
-                Boolean.getBoolean("TRAVIS"));
+                Boolean.parseBoolean(System.getenv("GITHUB_ACTIONS")));
 
-    Config config = new MapConfig(singletonMap(
-        "node", singletonMap("detect-drivers", "true")));
+    Config config = new MapConfig(singletonMap("node", singletonMap("detect-drivers", "true")));
+
     List<WebDriverInfo> reported = new ArrayList<>();
     new NodeOptions(config).getSessionFactories(info -> {
       reported.add(info);
@@ -111,17 +102,16 @@ public class NodeOptionsTest {
   public void shouldDetectCorrectDriversOnMac() {
     assumeTrue(Platform.getCurrent().is(Platform.MAC));
     assumeFalse("We don't have driver servers in PATH when we run unit tests",
-                Boolean.getBoolean("TRAVIS"));
+                Boolean.parseBoolean(System.getenv("GITHUB_ACTIONS")));
 
-    Config config = new MapConfig(singletonMap(
-        "node", singletonMap("detect-drivers", "true")));
+    Config config = new MapConfig(singletonMap("node", singletonMap("detect-drivers", "true")));
+
     List<WebDriverInfo> reported = new ArrayList<>();
     new NodeOptions(config).getSessionFactories(info -> {
       reported.add(info);
       return Collections.emptySet();
     });
 
-    LocalNode node = builder.build();
     assertThat(reported).is(supporting("chrome"));
     assertThat(reported).is(supporting("firefox"));
     assertThat(reported).isNot(supporting("internet explorer"));
@@ -131,8 +121,7 @@ public class NodeOptionsTest {
 
   @Test
   public void canConfigureNodeWithoutDriverDetection() {
-    Config config = new MapConfig(singletonMap(
-        "node", singletonMap("detect-drivers", "false")));
+    Config config = new MapConfig(singletonMap("node", singletonMap("detect-drivers", "false")));
     List<WebDriverInfo> reported = new ArrayList<>();
     new NodeOptions(config).getSessionFactories(info -> {
       reported.add(info);
@@ -143,7 +132,29 @@ public class NodeOptionsTest {
   }
 
   @Test
-  public void doNotDetectDriversByDefault() {
+  public void shouldThrowConfigExceptionIfDetectDriversIsFalseAndSpecificDriverIsAdded() {
+    Config config = new MapConfig(
+      singletonMap("node",
+                   ImmutableMap.of(
+                     "detect-drivers", "false",
+                     "drivers", "[chrome]"
+                   )));
+    List<WebDriverInfo> reported = new ArrayList<>();
+    try {
+      new NodeOptions(config).getSessionFactories(info -> {
+        reported.add(info);
+        return Collections.emptySet();
+      });
+      fail("Should have not executed 'getSessionFactories' successfully");
+    } catch (ConfigException e) {
+      // Fall through
+    }
+
+    assertThat(reported).isEmpty();
+  }
+
+  @Test
+  public void detectDriversByDefault() {
     Config config = new MapConfig(emptyMap());
 
     List<WebDriverInfo> reported = new ArrayList<>();
@@ -152,7 +163,32 @@ public class NodeOptionsTest {
       return Collections.emptySet();
     });
 
-    assertThat(reported).isEmpty();
+    assertThat(reported).isNotEmpty();
+  }
+
+  @Test
+  public void canBeConfiguredToUseHelperClassesToCreateSessionFactories() {
+    Capabilities caps = new ImmutableCapabilities("browserName", "cheese");
+    StringBuilder capsString = new StringBuilder();
+    new Json().newOutput(capsString).setPrettyPrint(false).write(caps);
+
+    Config config = new TomlConfig(new StringReader(String.format(
+      "[node]\n" +
+        "detect-drivers = false\n" +
+        "driver-factories = [" +
+        "  \"%s\",\n" +
+        "  \"%s\"\n" +
+        "]",
+      HelperFactory.class.getName(),
+      capsString.toString().replace("\"", "\\\""))));
+
+
+    NodeOptions options = new NodeOptions(config);
+    Map<Capabilities, Collection<SessionFactory>> factories = options.getSessionFactories(info -> emptySet());
+
+    Collection<SessionFactory> sessionFactories = factories.get(caps);
+    assertThat(sessionFactories).size().isEqualTo(1);
+    assertThat(sessionFactories.iterator().next()).isInstanceOf(SessionFactory.class);
   }
 
   private Condition<? super List<? extends WebDriverInfo>> supporting(String name) {
@@ -160,5 +196,22 @@ public class NodeOptionsTest {
       infos -> infos.stream().anyMatch(info -> name.equals(info.getCanonicalCapabilities().getBrowserName())),
       "supporting %s",
       name);
+  }
+
+  public static class HelperFactory {
+
+    public static SessionFactory create(Config config, Capabilities caps) {
+      return new SessionFactory() {
+        @Override
+        public Optional<ActiveSession> apply(CreateSessionRequest createSessionRequest) {
+          return Optional.empty();
+        }
+
+        @Override
+        public boolean test(Capabilities capabilities) {
+          return true;
+        }
+      };
+    }
   }
 }
